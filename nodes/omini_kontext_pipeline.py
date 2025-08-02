@@ -5,6 +5,7 @@ import folder_paths
 import comfy.utils
 import os
 import sys
+from contextlib import contextmanager
 
 # Add the omini-kontext source to Python path
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'omini_kontext_src'))
@@ -111,7 +112,16 @@ class OminiKontextPipelineNode:
         # Prepare reference delta
         reference_delta = [reference_delta_x, reference_delta_y, reference_delta_z]
         
-        # Generate
+        # Create ComfyUI progress bar for the UI
+        pbar = comfy.utils.ProgressBar(steps)
+        
+        # Create a callback to update ComfyUI progress during generation
+        def progress_callback(pipe, step_index, timestep, callback_kwargs):
+            # Update ComfyUI progress bar
+            pbar.update_absolute(step_index + 1, steps)
+            return callback_kwargs
+        
+        # Generate with both console progress (from diffusers) and UI progress (ComfyUI)
         with torch.inference_mode():
             result = pipeline(
                 prompt=prompt,
@@ -125,7 +135,8 @@ class OminiKontextPipelineNode:
                 num_inference_steps=steps,
                 guidance_scale=guidance_scale,
                 generator=generator,
-                output_type="pil"
+                output_type="pil",
+                callback_on_step_end=progress_callback
             )
         
         # Convert result back to ComfyUI format

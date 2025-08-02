@@ -154,11 +154,99 @@ class OminiKontextLatentCombinerNode:
         return (combined_latent, combined_ids)
 
 
+class OminiKontextLatentDecoderNode:
+    """
+    ComfyUI node for decoding Omini Kontext latents back to images
+    """
+    
+    def __init__(self):
+        self.dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "pipeline": ("OMINI_KONTEXT_PIPELINE",),
+                "latent": ("LATENT",),
+                "height": ("INT", {"default": 1024, "min": 64, "max": 2048, "step": 8}),
+                "width": ("INT", {"default": 1024, "min": 64, "max": 2048, "step": 8}),
+            }
+        }
+    
+    RETURN_TYPES = ("IMAGE",)
+    FUNCTION = "decode"
+    CATEGORY = "OminiKontext"
+    
+    def decode(self, pipeline, latent, height, width):
+        # Unpack the latents to the correct shape
+        vae_scale_factor = 2 ** (len(pipeline.vae.config.block_out_channels) - 1)
+        
+        # The latent is in packed format, need to unpack it
+        batch_size = latent.shape[0]
+        latent_channels = pipeline.vae.config.latent_channels
+        
+        # Unpack using the pipeline's method
+        unpacked = pipeline._unpack_latents(latent, height, width, vae_scale_factor)
+        
+        # Decode through VAE
+        with torch.no_grad():
+            # Adjust for VAE's expected input
+            unpacked = (unpacked / pipeline.vae.config.scaling_factor) + pipeline.vae.config.shift_factor
+            image = pipeline.vae.decode(unpacked, return_dict=False)[0]
+        
+        # Convert to ComfyUI format [B, H, W, C] in range [0, 1]
+        image = image.clamp(-1, 1)
+        image = (image + 1) / 2
+        image = image.permute(0, 2, 3, 1).cpu().float()
+        
+        return (image,)
+
+
+class OminiKontextLatentVisualizerNode:
+    """
+    ComfyUI node for visualizing the structure of Omini Kontext latents
+    """
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "latent": ("LATENT",),
+            },
+            "optional": {
+                "image_ids": ("IMAGE_IDS",),
+            }
+        }
+    
+    RETURN_TYPES = ("STRING",)
+    FUNCTION = "visualize"
+    CATEGORY = "OminiKontext"
+    OUTPUT_NODE = True
+    
+    def visualize(self, latent, image_ids=None):
+        info = []
+        info.append("=== Omini Kontext Latent Info ===")
+        info.append(f"Latent shape: {latent.shape}")
+        info.append(f"Latent dtype: {latent.dtype}")
+        info.append(f"Latent device: {latent.device}")
+        info.append(f"Latent min/max: {latent.min().item():.4f} / {latent.max().item():.4f}")
+        
+        if image_ids is not None:
+            info.append(f"\nImage IDs shape: {image_ids.shape}")
+            info.append(f"Image IDs dtype: {image_ids.dtype}")
+            info.append(f"First few IDs: {image_ids[:5].tolist()}")
+        
+        return ("\n".join(info),)
+
+
 NODE_CLASS_MAPPINGS = {
     "OminiKontextImageEncoder": OminiKontextImageEncoderNode,
     "OminiKontextTextEncoder": OminiKontextTextEncoderNode,
     "OminiKontextReferenceEncoder": OminiKontextReferenceEncoderNode,
     "OminiKontextLatentCombiner": OminiKontextLatentCombinerNode,
+    "OminiKontextLatentDecoder": OminiKontextLatentDecoderNode,
+    "OminiKontextLatentVisualizer": OminiKontextLatentVisualizerNode,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -166,4 +254,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "OminiKontextTextEncoder": "Omini Kontext Text Encoder",
     "OminiKontextReferenceEncoder": "Omini Kontext Reference Encoder",
     "OminiKontextLatentCombiner": "Omini Kontext Latent Combiner",
+    "OminiKontextLatentDecoder": "Omini Kontext Latent Decoder",
+    "OminiKontextLatentVisualizer": "Omini Kontext Latent Visualizer",
 }

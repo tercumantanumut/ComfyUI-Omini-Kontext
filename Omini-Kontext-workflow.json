@@ -1,0 +1,495 @@
+{
+  "id": "omini-kontext-exact-match",
+  "revision": 1,
+  "last_node_id": 20,
+  "last_link_id": 24,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "OminiKontextPipelineLoader",
+      "pos": [
+        -800,
+        300
+      ],
+      "size": [
+        400,
+        82
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "OMINI_KONTEXT_PIPELINE",
+          "type": "OMINI_KONTEXT_PIPELINE",
+          "links": [
+            1
+          ]
+        }
+      ],
+      "title": "Load FLUX.1-Kontext-dev",
+      "properties": {
+        "Node name for S&R": "OminiKontextPipelineLoader"
+      },
+      "widgets_values": [
+        "black-forest-labs/FLUX.1-Kontext-dev",
+        ""
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 8,
+      "type": "SaveImage",
+      "pos": [
+        650,
+        280
+      ],
+      "size": [
+        613.3443603515625,
+        644.1129760742188
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 7
+        }
+      ],
+      "outputs": [],
+      "title": "Save Result",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.48"
+      },
+      "widgets_values": [
+        "OminiKontext_exact"
+      ],
+      "color": "#322",
+      "bgcolor": "#533"
+    },
+    {
+      "id": 2,
+      "type": "OminiKontextLoRALoader",
+      "pos": [
+        -340.85693359375,
+        281.7137756347656
+      ],
+      "size": [
+        400,
+        130
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pipeline",
+          "type": "OMINI_KONTEXT_PIPELINE",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "OMINI_KONTEXT_PIPELINE",
+          "type": "OMINI_KONTEXT_PIPELINE",
+          "links": [
+            2
+          ]
+        }
+      ],
+      "title": "Load Character LoRA",
+      "properties": {
+        "Node name for S&R": "OminiKontextLoRALoader"
+      },
+      "widgets_values": [
+        "omini_kontext_character_5000.safetensors",
+        1,
+        "/home/ubuntu/ComfyUI/omini-kontext/lora_weights/character_5000.safetensors",
+        "character"
+      ],
+      "color": "#223",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 7,
+      "type": "OminiKontextPipeline",
+      "pos": [
+        200,
+        280
+      ],
+      "size": [
+        400,
+        500
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pipeline",
+          "type": "OMINI_KONTEXT_PIPELINE",
+          "link": 2
+        },
+        {
+          "name": "reference_image",
+          "type": "IMAGE",
+          "link": 4
+        },
+        {
+          "name": "input_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 3
+        },
+        {
+          "name": "width",
+          "type": "INT",
+          "widget": {
+            "name": "width"
+          },
+          "link": 8
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "widget": {
+            "name": "height"
+          },
+          "link": 9
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            7
+          ]
+        }
+      ],
+      "title": "Generate (Exact Match)",
+      "properties": {
+        "Node name for S&R": "OminiKontextPipeline"
+      },
+      "widgets_values": [
+        "Add character to the image.",
+        0,
+        0,
+        96,
+        28,
+        3.5,
+        1024,
+        1024,
+        42,
+        "fixed",
+        "",
+        1
+      ],
+      "color": "#232",
+      "bgcolor": "#353"
+    },
+    {
+      "id": 3,
+      "type": "LoadImage",
+      "pos": [
+        -800,
+        500
+      ],
+      "size": [
+        315,
+        314
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            3
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": []
+        }
+      ],
+      "title": "Scene Image (assets/scene_01.png)",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.48",
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "scene_01.png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 6,
+      "type": "GetImageSize",
+      "pos": [
+        -62.23841857910156,
+        609.9340209960938
+      ],
+      "size": [
+        210,
+        124
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "width",
+          "type": "INT",
+          "links": [
+            5,
+            8
+          ]
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "links": [
+            6,
+            9
+          ]
+        },
+        {
+          "name": "batch_size",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "title": "Get Scene Dimensions",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.48",
+        "Node name for S&R": "GetImageSize"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 10,
+      "type": "OminiKontextImageScale",
+      "pos": [
+        -822.7450561523438,
+        160.12338256835938
+      ],
+      "size": [
+        209.53378295898438,
+        26
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "OminiKontextImageScale"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 4,
+      "type": "LoadImage",
+      "pos": [
+        -464.0397644042969,
+        495.66845703125
+      ],
+      "size": [
+        337.9673767089844,
+        314.0000305175781
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            4
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": []
+        }
+      ],
+      "title": "Boy Reference (assets/boy_reference_512.png)",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.48",
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "boy_reference_512.png",
+        "image"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 5,
+      "type": "Note",
+      "pos": [
+        -849.2794799804688,
+        975.4354248046875
+      ],
+      "size": [
+        665,
+        120
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": "This workflow exactly matches run_character_insert.py:\n\n1. Load images from omini-kontext/assets/\n2. Use reference_delta = [0, 0, 96] (which is (1024+512)//16)\n3. 28 inference steps\n4. Prompt: \"Add character to the image.\"\n5. Seed: 213712637"
+      },
+      "widgets_values": [
+        "This workflow exactly matches run_character_insert.py:\n\n1. Load images from omini-kontext/assets/\n2. Use reference_delta = [0, 0, 96] (which is (1024+512)//16)\n3. 28 inference steps\n4. Prompt: \"Add character to the image.\"\n5. Seed: 42\nComfyUI-Omini-Kontext node wrapper by ogkai \nhttps://github.com/tercumantanumut/ComfyUI-Omini-Kontext\n\nOriginal model creator: https://github.com/Saquib764/omini-kontext Much love to this guy. This is great. \n\n"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      2,
+      0,
+      "OMINI_KONTEXT_PIPELINE"
+    ],
+    [
+      2,
+      2,
+      0,
+      7,
+      0,
+      "OMINI_KONTEXT_PIPELINE"
+    ],
+    [
+      3,
+      3,
+      0,
+      7,
+      0,
+      "IMAGE"
+    ],
+    [
+      4,
+      4,
+      0,
+      7,
+      1,
+      "IMAGE"
+    ],
+    [
+      5,
+      6,
+      0,
+      7,
+      7,
+      "INT"
+    ],
+    [
+      6,
+      6,
+      1,
+      7,
+      8,
+      "INT"
+    ],
+    [
+      7,
+      7,
+      0,
+      8,
+      0,
+      "IMAGE"
+    ],
+    [
+      8,
+      6,
+      0,
+      7,
+      3,
+      "INT"
+    ],
+    [
+      9,
+      6,
+      1,
+      7,
+      4,
+      "INT"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Exact Match to run_character_insert.py",
+      "bounding": [
+        -850,
+        230,
+        1600,
+        700
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.5730855330116813,
+      "offset": [
+        1350.2219366670386,
+        214.75715320731786
+      ]
+    },
+    "workflow_description": "Exact recreation of run_character_insert.py:\n- Model: black-forest-labs/FLUX.1-Kontext-dev\n- LoRA: character_5000.safetensors\n- Scene: assets/scene_01.png\n- Reference: assets/boy_reference_512.png\n- Prompt: 'Add character to the image.'\n- reference_delta: [0, 0, 96]\n- Steps: 28\n- Seed: 213712637",
+    "frontendVersion": "1.23.4"
+  },
+  "version": 0.4
+}
