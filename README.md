@@ -20,7 +20,7 @@ Native ComfyUI integration for the [Flux Omini Kontext](https://github.com/Saqui
 
 2. **Install dependencies:**
    ```bash
-   cd ComfyUI-OminiKontext
+   cd ComfyUI-Omini-Kontext
    pip install -r requirements.txt
    ```
 
