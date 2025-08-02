@@ -15,7 +15,7 @@ Native ComfyUI integration for the [Flux Omini Kontext](https://github.com/Saqui
 1. **Clone the repository into your ComfyUI custom_nodes folder:**
    ```bash
    cd ComfyUI/custom_nodes
-   git clone https://github.com/yourusername/ComfyUI-OminiKontext.git
+   git clone https://github.com/tercumantanumut/ComfyUI-OminiKontext.git
    ```
 
 2. **Install dependencies:**
