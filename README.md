@@ -1,4 +1,4 @@
-# ComfyUI-OminiKontext
+# ComfyUI-Omini-Kontext
 
 Wrapper ComfyUI integration for the [Flux Omini Kontext](https://github.com/Saquib764/omini-kontext) pipeline, enabling seamless character/object insertion into scenes using FLUX.1-Kontext-dev with LoRA adaptation.
 
