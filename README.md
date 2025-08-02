@@ -146,7 +146,7 @@ Run: `huggingface-cli login` and enter your HuggingFace token
 
 - Original Omini-Kontext implementation: [Saquib764/omini-kontext](https://github.com/Saquib764/omini-kontext)
 - Based on FLUX.1-Kontext-dev by Black Forest Labs
-- ComfyUI integration by [Your Name]
+- ComfyUI integration by ogkai (github: tercumantanumut)
 
 ## License
 
