@@ -98,14 +98,14 @@ reference_delta = [0, 0, 96]  # Standard positioning
 prompt = "A boy playing in a sunny park"
 ```
 
-### Object Placement
+### Object Placement (If trained.)
 Place objects with spatial control:
 ```
 reference_delta = [50, 0, 96]  # Shift right
 prompt = "A vintage car parked on a city street"
 ```
 
-### Style Transfer
+### Style Transfer (If trained.)
 Combine reference style with scene:
 ```
 reference_delta = [0, 0, 48]  # Closer integration
