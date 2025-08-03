@@ -31,6 +31,7 @@ class OminiKontextPipelineLoaderNode:
             },
             "optional": {
                 "lora_path": ("STRING", {"default": "", "multiline": False}),
+                "hf_token": ("STRING", {"default": "", "multiline": False}),
             }
         }
     
@@ -38,12 +39,19 @@ class OminiKontextPipelineLoaderNode:
     FUNCTION = "load_pipeline"
     CATEGORY = "OminiKontext"
     
-    def load_pipeline(self, model_path, lora_path=""):
+    def load_pipeline(self, model_path, lora_path="", hf_token=""):
         # Load pipeline
         print(f"Loading Flux Omini Kontext pipeline from: {model_path}")
+        
+        # Prepare kwargs for from_pretrained
+        kwargs = {"torch_dtype": self.dtype}
+        if hf_token:
+            kwargs["token"] = hf_token
+            print("Using provided Hugging Face token for authentication")
+        
         pipeline = FluxOminiKontextPipeline.from_pretrained(
             model_path,
-            torch_dtype=self.dtype
+            **kwargs
         ).to(self.device)
         
         # Enable memory optimizations
