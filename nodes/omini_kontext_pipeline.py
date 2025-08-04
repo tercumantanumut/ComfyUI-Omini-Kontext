@@ -142,8 +142,9 @@ class OminiKontextSplitPipelineLoaderNode:
             CLIPTextConfig(**read_json(os.path.join(current_dir, "configs/text_encoder/config.json")))
         )
         clip_model.load_state_dict(load_file(clip_path))
+        clip_model = clip_model.to(dtype=self.dtype)
         clip_tokenizer = CLIPTokenizer.from_pretrained(os.path.join(current_dir, "configs/tokenizer"))
-
+        
         if auto_t5_gguf:
             t5_model = T5EncoderModel.from_pretrained(
                 "calcuis/kontext-gguf",
@@ -155,20 +156,23 @@ class OminiKontextSplitPipelineLoaderNode:
                 T5Config(**read_json(os.path.join(current_dir, "configs/text_encoder_2/config.json")))
             )
             t5_model.load_state_dict(load_file(t5_path), strict=False)
+            t5_model = t5_model.to(dtype=self.dtype)
         t5_tokenizer = T5TokenizerFast.from_pretrained(os.path.join(current_dir, "configs/tokenizer_2"))
 
         vae_model = AutoencoderKL(
             **read_json(os.path.join(current_dir, "configs/vae/config.json"))
         )
         vae_model.load_state_dict(load_file(vae_path))
+        vae_model = vae_model.to(dtype=self.dtype)
 
         if transformer_path.endswith('.safetensors') or transformer_path.endswith('.sft'):
             transformer_model = FluxTransformer2DModel(
                 **read_json(os.path.join(current_dir, "configs/transformer/config.json"))
             )
             transformer_model.load_state_dict(
-                load_file(transformer_path, dtype=self.dtype)
+                load_file(transformer_path)
             )
+            transformer_model = transformer_model.to(dtype=self.dtype)
         elif transformer_path.endswith('.gguf'):
             from diffusers import GGUFQuantizationConfig
 
