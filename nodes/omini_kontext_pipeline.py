@@ -148,7 +148,7 @@ class OminiKontextSplitPipelineLoaderNode:
             t5_model = T5EncoderModel.from_pretrained(
                 "calcuis/kontext-gguf",
                 gguf_file="t5xxl_fp16-q4_0.gguf",
-                torch_dtype=torch.bfloat16,
+                torch_dtype=self.dtype,
             )
         else:
             t5_model = T5EncoderModel(
