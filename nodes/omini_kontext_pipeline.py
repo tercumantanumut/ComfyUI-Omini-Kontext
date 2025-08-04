@@ -119,6 +119,7 @@ class OminiKontextSplitPipelineLoaderNode:
             },
             "optional": {
                 "lora_path": ("STRING", {"default": "", "multiline": False}),
+                "auto_t5_gguf": ("BOOLEAN", {"default": False, "tooltip": "Auto load GGUF quantization for T5 model if available."}),
             }
         }
     
@@ -126,9 +127,8 @@ class OminiKontextSplitPipelineLoaderNode:
     FUNCTION = "load_safetensor"
     CATEGORY = "OminiKontext"
 
-    def load_safetensor(self, transformer_path, clip_path, t5_path, vae_path, lora_path=""):
+    def load_safetensor(self, transformer_path, clip_path, t5_path, vae_path, lora_path="", auto_t5_gguf=False, auto_transformer_gguf=False):
         # Load pipeline
-        print(f"Loading Flux Omini Kontext pipeline from: {transformer_path}")
         transformer_path = os.path.join(models_dir, "unet", transformer_path)
         clip_path = os.path.join(models_dir, "clip", clip_path)
         t5_path = os.path.join(models_dir, "clip", t5_path)
@@ -144,10 +144,17 @@ class OminiKontextSplitPipelineLoaderNode:
         clip_model.load_state_dict(load_file(clip_path))
         clip_tokenizer = CLIPTokenizer.from_pretrained(os.path.join(current_dir, "configs/tokenizer"))
 
-        t5_model = T5EncoderModel(
-            T5Config(**read_json(os.path.join(current_dir, "configs/text_encoder_2/config.json")))
-        )
-        t5_model.load_state_dict(load_file(t5_path), strict=False)
+        if auto_t5_gguf:
+            t5_model = T5EncoderModel.from_pretrained(
+                "calcuis/kontext-gguf",
+                gguf_file="t5xxl_fp16-q4_0.gguf",
+                torch_dtype=torch.bfloat16,
+            )
+        else:
+            t5_model = T5EncoderModel(
+                T5Config(**read_json(os.path.join(current_dir, "configs/text_encoder_2/config.json")))
+            )
+            t5_model.load_state_dict(load_file(t5_path), strict=False)
         t5_tokenizer = T5TokenizerFast.from_pretrained(os.path.join(current_dir, "configs/tokenizer_2"))
 
         vae_model = AutoencoderKL(
