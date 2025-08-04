@@ -5,13 +5,34 @@ import folder_paths
 import comfy.utils
 import os
 import sys
+import json
+import folder_paths
 from contextlib import contextmanager
+from safetensors.torch import load_file
 
 # Add the omini-kontext source to Python path
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'omini_kontext_src'))
 
+from transformers import (
+    CLIPTextModel, CLIPTextConfig,
+    CLIPTokenizer, 
+    T5EncoderModel, T5Config,
+    T5TokenizerFast
+)
+
+from diffusers.schedulers import FlowMatchEulerDiscreteScheduler
+from diffusers.models import AutoencoderKL, FluxTransformer2DModel
+
 from pipeline_flux_omini_kontext import FluxOminiKontextPipeline
 from diffusers.utils import load_image
+
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+
+def read_json(file_path):
+    with open(file_path) as f:
+        return json.load(f)
 
 
 class OminiKontextPipelineLoaderNode:
@@ -54,6 +75,99 @@ class OminiKontextPipelineLoaderNode:
             **kwargs
         ).to(self.device)
         
+        # Enable memory optimizations
+        pipeline.enable_vae_slicing()
+        pipeline.enable_vae_tiling()
+        
+        # Load LoRA if provided
+        if lora_path and os.path.exists(lora_path):
+            print(f"Loading LoRA weights from: {lora_path}")
+            pipeline.load_lora_weights(lora_path, adapter_name="omini_kontext")
+        
+        return (pipeline,)
+
+
+class FluxOminiKontextSplitPipelineLoaderNode:
+
+    def __init__(self):
+        self.dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        transformer_path = [f for f in folder_paths.get_filename_list("unet") if f.endswith(('.safetensors', '.sft', 'gguf'))]
+        clip_path = [f for f in folder_paths.get_filename_list("clip") if f.endswith(('.safetensors', '.sft'))]
+        t5_path = [f for f in folder_paths.get_filename_list("clip") if f.endswith(('.safetensors', '.sft'))]
+        vae_path = [f for f in folder_paths.get_filename_list("vae") if f.endswith(('.safetensors', '.sft'))]
+
+        return {
+            "required": {
+                "transformer_path": (transformer_path,),
+                "clip_path": (clip_path,),
+                "t5_path": (t5_path,),
+                "vae_path": (vae_path, )
+            },
+            "optional": {
+                "lora_path": ("STRING", {"default": "", "multiline": False}),
+            }
+        }
+    
+    RETURN_TYPES = ("OMINI_KONTEXT_PIPELINE",)
+    FUNCTION = "load_safetensor"
+    CATEGORY = "OminiKontext"
+
+    def load_safetensor(self, transformer_path, clip_path, t5_path, vae_path, lora_path=""):
+        # Load pipeline
+        print(f"Loading Flux Omini Kontext pipeline from: {transformer_path}")
+        
+        # Prepare kwargs for from_pretrained
+        kwargs = {"torch_dtype": self.dtype}
+        
+        scheduler = FlowMatchEulerDiscreteScheduler(**read_json(os.path.join(current_dir, "configs/scheduler/scheduler_config.json")))
+        clip_model = CLIPTextModel(
+            CLIPTextConfig(**read_json(os.path.join(current_dir, "configs/text_encoder/config.json")))
+        ).load_state_dict(load_file(clip_path), strict=False)
+        clip_tokenizer = CLIPTokenizer.from_pretrained(os.path.join(current_dir, "configs/tokenizer"))
+
+        t5_model = T5EncoderModel(
+            T5Config(**read_json(os.path.join(current_dir, "configs/text_encoder_2/config.json")))
+        ).load_state_dict(load_file(t5_path), strict=False)
+        t5_tokenizer = T5TokenizerFast.from_pretrained(os.path.join(current_dir, "configs/tokenizer_2"))
+
+        vae_model = AutoencoderKL(
+            **read_json(os.path.join(current_dir, "configs/vae/config.json"))
+        ).load_state_dict(load_file(vae_path), strict=False)
+
+        if transformer_path.endswith('.safetensors') or transformer_path.endswith('.sft'):
+            transformer_model = FluxTransformer2DModel(
+                **read_json(os.path.join(current_dir, "configs/transformer/config.json"))
+            ).load_state_dict(
+                load_file(transformer_path, dtype=self.dtype), strict=False
+            )
+        elif transformer_path.endswith('.gguf'):
+            from diffusers import GGUFQuantizationConfig
+
+            quantization_config=GGUFQuantizationConfig(compute_dtype=self.dtype)
+            transformer_model = FluxTransformer2DModel.from_single_file(
+                transformer_path,
+                quantization_config=quantization_config,
+                torch_dtype=self.dtype,
+            ).to(self.device)
+        else:
+            raise NotImplementedError
+        
+        pipeline = FluxOminiKontextPipeline(
+            scheduler=scheduler,
+            vae=vae_model,
+            text_encoder=clip_model,
+            tokenizer=clip_tokenizer,
+            text_encoder_2=t5_model,
+            tokenizer_2=t5_tokenizer,
+            transformer=transformer_model,
+            image_encoder=None,
+            feature_extractor=None
+        ).to(self.device)
+
         # Enable memory optimizations
         pipeline.enable_vae_slicing()
         pipeline.enable_vae_tiling()
@@ -206,10 +320,12 @@ NODE_CLASS_MAPPINGS = {
     "OminiKontextPipelineLoader": OminiKontextPipelineLoaderNode,
     "OminiKontextPipeline": OminiKontextPipelineNode,
     "OminiKontextImageScale": OminiKontextImageScaleNode,
+    "FluxOminiKontextSplitPipelineLoader": FluxOminiKontextSplitPipelineLoaderNode,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "OminiKontextPipelineLoader": "Omini Kontext Pipeline Loader",
     "OminiKontextPipeline": "Omini Kontext Pipeline",
     "OminiKontextImageScale": "Omini Kontext Image Scale",
+    "FluxOminiKontextSplitPipelineLoader": "Flux Omini Kontext Split Pipeline Loader",
 }
